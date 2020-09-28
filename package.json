@@ -1,0 +1,17 @@
+{
+  "name": "rsa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "big-integer": "^1.6.48",
+    "decimal.js": "^10.2.0",
+    "number-theory": "^1.1.0",
+    "scanf": "^1.1.2"
+  }
+}
