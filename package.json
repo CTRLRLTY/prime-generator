@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "big-integer": "^1.6.48",
+    "cli-progress": "^3.8.2",
     "decimal.js": "^10.2.0",
     "number-theory": "^1.1.0",
     "scanf": "^1.1.2"

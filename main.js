@@ -1,13 +1,12 @@
 const scanf = require("scanf");
 const bigInt = require("big-integer")
 const process = require('process');
+const cliProgress = require('cli-progress');
 
 //************************************* Function ************************************* //
 //**
 //*
 //
-let loadTime = 0;
-
 function RSA(p,q,e) {
   this.p = p;
   this.q = q;
@@ -22,10 +21,8 @@ RSA.encrypt = (plaintext, key) => plaintext.modPow(key.e,key.n);
 RSA.decrypt = (ciphertext, key) =>  ciphertext.modPow(key.d,key.n);
 RSA.validate = (ciphertext,plaintext,key) => {
   let msg = [];
-  loadTime = 0;
   // Check whether the decrypted text match with the plaintext
   for(let i = 0; i < ciphertext.length; i++) {
-    loadTime++;
     msg.push(RSA.decrypt(bigInt(ciphertext[i]),key));
     if(msg[i].toString() !== plaintext[i]) return false
   }
@@ -37,7 +34,6 @@ RSA.generateCandidate = function (phiArray,{e:e,n:n} = {e: 0, n:0},ciphertext,pl
   let d = {};
   let test = {};
   let decryptable = {};
-  loadTime = 0;
   for(let i = 0; i < phiArray.length; i++){
     let phi = bigInt(phiArray[i]);
     let propertyPhi = phi.toString();
@@ -48,10 +44,11 @@ RSA.generateCandidate = function (phiArray,{e:e,n:n} = {e: 0, n:0},ciphertext,pl
     for (let k=1; d[propertyPhi].length < 1; k++) { //((phi*k)+1)/e
       let temp = phi.multiply(k).plus(1)
       if(temp.isDivisibleBy(e)){
-        loadTime++;
-
         let privateKey = {d:temp.divide(e),n};
-        if(RSA.validate(ciphertext,plaintext,privateKey)) d[propertyPhi].push(privateKey.d.toString());
+        if(RSA.validate(ciphertext,plaintext,privateKey)) {
+          candidateBar.increment();
+          d[propertyPhi].push(privateKey.d.toString());
+        }
       }
     }
 
@@ -62,13 +59,14 @@ RSA.generateCandidate = function (phiArray,{e:e,n:n} = {e: 0, n:0},ciphertext,pl
         while(d[propertyPhi].length < 5) {
           tempD = tempD.plus(phi); // d+phi*n
           if(RSA.validate(ciphertext,plaintext,{d:tempD,n}) && tempD.isOdd()) {
-            loadTime++;
+            candidateBar.increment();
             d[propertyPhi].push(tempD.toString()) //is it odd and can decrypt
           }
         }
       } else {
         for(let ii=0; d[propertyPhi].length < 5; ii++) { //d+r*n
           let tempD = bigInt(d[propertyPhi][ii]).plus(phi); //d+phi*n
+          candidateBar.increment();
           d[propertyPhi].push(tempD.toString());
         }
       }
@@ -89,13 +87,15 @@ RSA.prototype.getAllPhi = function() {
   let n = this.n;
   let phiArray = [];
   let r = phi;
+  let y;
   for(
-    let y = 0,temp = bigInt(2).pow(y); 
+    y = 0,temp = bigInt(2).pow(y); 
     phiArray.length < 5 && r.isEven();
     y++,temp = bigInt(2).pow(y),r = phi.divide(temp)
   ) {
-    if(phi.isDivisibleBy(temp))
+    if(phi.isDivisibleBy(temp)) {
       phiArray.push(r.toString());
+    }
   }
   phiArray.push(r.toString()); //last push since its not divisible anymore
 
@@ -113,7 +113,11 @@ RSA.prototype.generatePublicKey = function() {
 //**
 //*
 //
-async function main() {
+let candidateBar = new cliProgress.SingleBar({
+  format: `Generating Candidate   [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}`
+}, cliProgress.Presets.legacy);
+
+function main() {
   process.stdout.write("msg: ");
   let msg = scanf("%s");
   let p = 0, q = 0, e = 0;
@@ -134,9 +138,7 @@ async function main() {
   }
 
   let myRSA = new RSA(p,q,e);
-  console.log("Generating Phi")
   let phiArray = myRSA.getAllPhi();
-  console.log("Generating Public key")
   let publicKey = myRSA.generatePublicKey();
   let privateKey = {}; 
 
@@ -150,8 +152,10 @@ async function main() {
     cipherText.push(temp);
     __cipherText.push(temp.toString())
   }
-  console.log("Generating Candidate for private key")
-  await let [candidate, isPrime,decryptable] = RSA.generateCandidate(phiArray,publicKey,cipherText,charCode);
+  candidateBar.start(phiArray.length * 5,0);
+  let [candidate, isPrime,decryptable] = RSA.generateCandidate(phiArray,publicKey,cipherText,charCode);
+  candidateBar.update(phiArray.length * 5);
+  candidateBar.stop();
 
   console.log("msg in UTF-16: ", charCode);
   console.log("cipher text; ", __cipherText);
