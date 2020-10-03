@@ -1,13 +1,10 @@
-const scanf = require("scanf");
 const bigInt = require("big-integer")
-const process = require('process');
-const cliProgress = require('cli-progress');
 
 //************************************* Function ************************************* //
 //**
 //*
 //
-function RSA(p,q,e) {
+export function RSA(p,q,e) {
   this.p = p;
   this.q = q;
   this.e = e;
@@ -29,7 +26,6 @@ RSA.validate = (ciphertext,plaintext,key) => {
 
   return true
 }
-
 RSA.generateCandidate = function (phiArray,{e:e,n:n} = {e: 0, n:0},ciphertext,plaintext) {
   let d = {};
   let test = {};
@@ -82,14 +78,14 @@ RSA.generateCandidate = function (phiArray,{e:e,n:n} = {e: 0, n:0},ciphertext,pl
 
   return [d,test,decryptable];
 }
-RSA.prototype.getAllPhi = function() { 
+RSA.prototype.getAllPhi = function() {
   let phi = this.phi;
   let n = this.n;
   let phiArray = [];
   let r = phi;
   let y;
   for(
-    y = 0,temp = bigInt(2).pow(y); 
+    y = 0,temp = bigInt(2).pow(y);
     phiArray.length < 5 && r.isEven();
     y++,temp = bigInt(2).pow(y),r = phi.divide(temp)
   ) {
@@ -101,7 +97,6 @@ RSA.prototype.getAllPhi = function() {
 
   return phiArray;
 }
-
 RSA.prototype.generatePublicKey = function() {
   let n = this.n;
   let e = this.e;
@@ -109,80 +104,9 @@ RSA.prototype.generatePublicKey = function() {
   return publicKey;
 }
 
-//************************************* Start Here ************************************* //
-//**
-//*
-//
-let candidateBar = new cliProgress.SingleBar({
-  format: `Generating Candidate   [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}`
-}, cliProgress.Presets.legacy);
-
-function main() {
-  process.stdout.write("msg: ");
-  let msg = scanf("%s");
-  let p = 0, q = 0, e = 0;
-
-  // Filter for all input to only be prime
-  while(1) {
-    if(!bigInt(p).isPrime()) {
-      process.stdout.write("input p [must be prime]: ");
-      p = scanf("%s");
-    } else if(!bigInt(q).isPrime()) {
-      process.stdout.write("input q [must be prime]: ");
-      q = scanf("%s");
-    }
-    else if(!bigInt(e).isPrime()) {
-      process.stdout.write("input e [must be prime]: ");
-      e = scanf("%s");
-    } else break
-  }
-
-  let myRSA = new RSA(p,q,e);
-  let phiArray = myRSA.getAllPhi();
-  let publicKey = myRSA.generatePublicKey();
-  let privateKey = {}; 
-
-  let charCode = []; //The uncode version of each char from msg
-  let cipherText= []; //used to store calculation
-  let __cipherText = []; //used for output 
-
-  for(let i=0; i < msg.length; i++) {
-    charCode.push(msg.charCodeAt(i).toString());
-    let temp = RSA.encrypt(bigInt(charCode[i]),publicKey)
-    cipherText.push(temp);
-    __cipherText.push(temp.toString())
-  }
-  candidateBar.start(phiArray.length * 5,0);
-  let [candidate, isPrime,decryptable] = RSA.generateCandidate(phiArray,publicKey,cipherText,charCode);
-  candidateBar.update(phiArray.length * 5);
-  candidateBar.stop();
-
-  console.log("msg in UTF-16: ", charCode);
-  console.log("cipher text; ", __cipherText);
-
-  privateKey.n = publicKey.n;
-  console.log("R original: ", [phiArray[0]]);
-  console.log("R simplified: ", phiArray.slice(1))
-  phiArray.pop(0);
-  console.log("Candidate: ", candidate);
-  console.log("Is prime: ", isPrime)
-  console.log("Can decrypt: ", decryptable)
-  if(candidate.length < 1) 
-    console.log("No candidate");
-  else {
-    process.stdout.write("Select Candidate for d: ");
-    let d = scanf("%s");
-    privateKey.d = bigInt(d);
-
-    let plainText = [];
-    for(let i=0; i < cipherText.length; i++) 
-      plainText.push(String.fromCharCode(RSA.decrypt(cipherText[i],privateKey) + ""));
-    console.log("Decryption: ",plainText.toString().replace(/,/g,""));
-  }
+export function generatePrime(n) {
+  let primeArray = [];
+  for(let i = bigInt(0); i < n; i = i.plus(1))
+    if(i.isPrime()) primeArray.push(i.toString());
+  return primeArray
 }
-
-main();
-
-
-
-
