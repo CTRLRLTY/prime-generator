@@ -9,8 +9,8 @@ const entry = {
 
 const output = {
     filename: '[name].[contenthash].js',
-    path: path.resolve(__dirname, 'doc'),
-    publicPath: '/doc',
+    path: path.resolve(__dirname, 'docs'),
+    publicPath: '/rsa/docs',
 }
 
 const optimization = {
