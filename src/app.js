@@ -69,27 +69,51 @@ function PrimeTable(props) {
   }
 
   const handleClick = () => {
-    setMin(0);
-    setMax(1000);
+    setMin(bigInt.zero);
+    setMax(bigInt('1000'));
 
     setTableRows(generateTableRow(value))
     setModal(true);
+  }
+
+  const handleKeyDown = e => {
+    let searchval = bigInt(e.target.value);
+
+    if(e.keyCode === 13) {
+      if(searchval.gt(value) || searchval.lt(0))
+        alert("that is beyond the generated table")
+      else {
+        setMax(searchval);
+        setMin(searchval.minus(1000))
+      }
+    }
+
   }
 
   const handleToggle = () => {
     setModal(!modal);
   }
 
-  const paginationNext = event => {
-    if(max !== +value){
+  const paginationFirst = () => {
+    setMin(bigInt.zero);
+    setMax(bigInt('1000'));
+  }
+
+  const paginationLast = () => {
+    setMax(value)
+    setMin(value.minus(1000))
+  }
+
+  const paginationNext = () => {
+    if(max.lt(value)){
       setMin(max);
-      setMax(max+1000);
+      setMax(max.plus(1000));
     }
   }
   const paginationPrev = () => {
-    if(min !== 0){
-      setMin(max-2000);
-      setMax(max-1000);
+    if(min.gt(0)){
+      setMin(max.minus(2000));
+      setMax(max.minus(1000));
     }
   }
 
@@ -106,7 +130,7 @@ function PrimeTable(props) {
       <br/>
       <Button onClick={handleClick}>Generate</Button>
       <Button onClick={handleToggle}>Hide Table</Button>
-      <Modal isOpen={modal} toggle={handleToggle}>
+      <Modal size="lg" isOpen={modal} toggle={handleToggle}>
         <ModalBody>
           <Table bordered>
             <thead>
@@ -124,16 +148,19 @@ function PrimeTable(props) {
           </Table>
           <Pagination size="sm">
             <PaginationItem>
-              <PaginationLink first/>
+              <PaginationLink first onClick={paginationFirst}/>
             </PaginationItem>
             <PaginationItem>
               <PaginationLink previous onClick={paginationPrev}/>
             </PaginationItem>
             <PaginationItem>
+              <input type="text" onKeyDown={handleKeyDown}/>
+            </PaginationItem>
+            <PaginationItem>
               <PaginationLink next onClick={paginationNext}/>
             </PaginationItem>
             <PaginationItem>
-              <PaginationLink last/>
+              <PaginationLink last onClick={paginationLast}/>
             </PaginationItem>
           </Pagination>
         </ModalBody>
