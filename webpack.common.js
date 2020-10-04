@@ -47,6 +47,10 @@ const plugins = [
 const __module = {
     rules: [
         {
+          test: /\.worker\.js$/,
+          use: {loader: 'worker-loader'},
+        },
+        {
             test: /\.(js|jsx)$/,
             exclude: /(node_modules | test | server)/,
             include: path.resolve(__dirname, 'src'),

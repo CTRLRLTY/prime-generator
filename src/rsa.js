@@ -113,6 +113,6 @@ export function generatePrime(min,max) {
 export function genRowMap(min,max) {
     const rowMap = [];
     for(let i = bigInt(min); i.leq(max); i = i.plus(1))
-        if(i.isDivisibleBy(10) || i === 0) rowMap.push(i);
+        if(i.isDivisibleBy(10) || i.isZero()) rowMap.push(i.toString());
     return rowMap;
   }

@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import ReactDOM from 'react-dom';
+import bigInt from 'big-integer';
 import {
   Table,
   Button,
@@ -11,6 +12,7 @@ import {
 } from 'reactstrap';
 import {generatePrime, genRowMap} from './rsa'
 import 'bootstrap/dist/css/bootstrap.min.css';
+import RM_Worker from './rm.worker.js';
 function getLastDigit(str) {
   return str.slice(-1);
 }
@@ -25,21 +27,16 @@ function PrimeTable(props) {
   const [value, setValue] = useState('');
   const [modal, setModal] = useState(false);
   const [tableRows, setTableRows] = useState(null);
-  const [rowMap, setRowMap] = useState([]);
   const [max, setMax] = useState(1000);
   const [min, setMin] = useState(0);
 
   function generateTableRow() {
     const primeArray = generatePrime(min,max);
     const primeMap = primeArray.filter(prime => IsSelectedPrime(prime.toString()));
-    console.log("done generate prime map");
+    const rowMap = genRowMap(min,max);
 
-    const tempRowMap = rowMap.slice(min/10, max/10);
-    console.log("done slicing rowmap")
-
-    const _tableRows = tempRowMap.map(row => {
-      const rowString = row.toString(); //Row is of BigInt type so it need to be in string
-      const primeRows = primeMap.filter(prime => prime.gt(row) && prime.lt(row.plus(10)));
+    const _tableRows = rowMap.map(row => {
+      const primeRows = primeMap.filter(prime => prime.gt(row) && prime.lt(bigInt(row).plus(10)));
       const _primeRows = [null,null,null,null];
       for (let i=0; i < 4; i++) {
         if(primeRows[i] !== undefined) {
@@ -57,24 +54,24 @@ function PrimeTable(props) {
       ));
 
       return (
-        <tr key={rowString}>
-          <th scope="row">{rowString}</th>
+        <tr >
+          <th scope="row">{row}</th>
           {primetd}
         </tr>
-      )
-    })
+      );
+    });
     return _tableRows;
   }
 
 
   const handleChange = event => {
-    setValue(event.target.value);
+    setValue(bigInt(event.target.value));
   }
 
   const handleClick = () => {
     setMin(0);
     setMax(1000);
-    setRowMap(genRowMap(0,+value));
+
     setTableRows(generateTableRow(value))
     setModal(true);
   }
@@ -97,7 +94,7 @@ function PrimeTable(props) {
   }
 
   useEffect(() =>{
-    setTableRows(generateTableRow(value))
+      setTableRows(generateTableRow());
   }, [min,max,value,modal])
 
   return(
@@ -149,3 +146,4 @@ ReactDOM.render(
     <PrimeTable/>
   </div>, document.getElementById('root')
 )
+console.log(bigInt(5));
