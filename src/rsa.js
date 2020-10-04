@@ -104,9 +104,15 @@ RSA.prototype.generatePublicKey = function() {
   return publicKey;
 }
 
-export function generatePrime(n) {
+export function generatePrime(min,max) {
   let primeArray = [];
-  for(let i = bigInt(0); i < n; i = i.plus(1))
-    if(i.isPrime()) primeArray.push(i.toString());
+  for(let i = bigInt(min); i.lt(max); i = i.plus(1))
+    if(i.isPrime()) primeArray.push(i);
   return primeArray
 }
+export function genRowMap(min,max) {
+    const rowMap = [];
+    for(let i = bigInt(min); i.leq(max); i = i.plus(1))
+        if(i.isDivisibleBy(10) || i === 0) rowMap.push(i);
+    return rowMap;
+  }

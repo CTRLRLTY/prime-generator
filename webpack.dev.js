@@ -5,10 +5,7 @@ module.exports = merge(common, {
   mode: 'development',
   devtool: 'inline-source-map',
   devServer: {
-    contentBase: './client/dist',
-    proxy: {
-      '/': 'http://localhost:3000'
-    }
+    contentBase: './dist',
   },
   optimization: {
     usedExports: true, //For tree shaking
