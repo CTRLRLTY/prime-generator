@@ -12,10 +12,11 @@ import {
 } from 'reactstrap';
 import {generatePrime, genRowMap} from './rsa'
 import 'bootstrap/dist/css/bootstrap.min.css';
-import RM_Worker from './rm.worker.js';
+
 function getLastDigit(str) {
   return str.slice(-1);
 }
+
 function IsSelectedPrime(prime) {
 //This function does not check if the parameter is prime, it is assume its prime
   let lastDigit = prime.slice(-1);
@@ -24,7 +25,6 @@ function IsSelectedPrime(prime) {
 }
 
 function PrimeTable(props) {
-  const [value, setValue] = useState('');
   const [modal, setModal] = useState(false);
   const [tableRows, setTableRows] = useState(null);
   const [max, setMax] = useState(1000);
@@ -63,16 +63,12 @@ function PrimeTable(props) {
     return _tableRows;
   }
 
-
-  const handleChange = event => {
-    setValue(bigInt(event.target.value));
-  }
-
   const handleClick = () => {
     setMin(bigInt.zero);
     setMax(bigInt('1000'));
 
-    setTableRows(generateTableRow(value))
+    setTableRows(generateTableRow())
+    setValue(bigInt(event.target.value));
     setModal(true);
   }
 
@@ -80,12 +76,11 @@ function PrimeTable(props) {
     let searchval = bigInt(e.target.value);
 
     if(e.keyCode === 13) {
-      if(searchval.gt(value) || searchval.lt(0))
-        alert("that is beyond the generated table")
-      else {
+        if(searchval.lt(1000))
+          setMin(bigInt.zero);
+        else
+          setMin(searchval.minus(1000));
         setMax(searchval);
-        setMin(searchval.minus(1000))
-      }
     }
 
   }
@@ -94,21 +89,9 @@ function PrimeTable(props) {
     setModal(!modal);
   }
 
-  const paginationFirst = () => {
-    setMin(bigInt.zero);
-    setMax(bigInt('1000'));
-  }
-
-  const paginationLast = () => {
-    setMax(value)
-    setMin(value.minus(1000))
-  }
-
   const paginationNext = () => {
-    if(max.lt(value)){
-      setMin(max);
-      setMax(max.plus(1000));
-    }
+    setMin(max);
+    setMax(max.plus(1000));
   }
   const paginationPrev = () => {
     if(min.gt(0)){
@@ -119,17 +102,11 @@ function PrimeTable(props) {
 
   useEffect(() =>{
       setTableRows(generateTableRow());
-  }, [min,max,value,modal])
+  }, [min,max,modal])
 
   return(
     <div>
-      <label>
-      generate prime:<br/>
-      <input type="text" name="prime_num" value={value} onChange={handleChange}/>
-      </label>
-      <br/>
-      <Button onClick={handleClick}>Generate</Button>
-      <Button onClick={handleToggle}>Hide Table</Button>
+      <Button onClick={handleToggle}>Mapped Tables</Button>
       <Modal size="lg" isOpen={modal} toggle={handleToggle}>
         <ModalBody>
           <Table bordered>
@@ -148,9 +125,6 @@ function PrimeTable(props) {
           </Table>
           <Pagination size="sm">
             <PaginationItem>
-              <PaginationLink first onClick={paginationFirst}/>
-            </PaginationItem>
-            <PaginationItem>
               <PaginationLink previous onClick={paginationPrev}/>
             </PaginationItem>
             <PaginationItem>
@@ -158,9 +132,6 @@ function PrimeTable(props) {
             </PaginationItem>
             <PaginationItem>
               <PaginationLink next onClick={paginationNext}/>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink last onClick={paginationLast}/>
             </PaginationItem>
           </Pagination>
         </ModalBody>

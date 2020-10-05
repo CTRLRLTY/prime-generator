@@ -4,7 +4,7 @@ const bigInt = require("big-integer")
 //**
 //*
 //
-export function RSA(p,q,e) {
+function RSA(p,q,e) {
   this.p = p;
   this.q = q;
   this.e = e;
@@ -103,6 +103,8 @@ RSA.prototype.generatePublicKey = function() {
   let publicKey = {e, n};
   return publicKey;
 }
+
+export default RSA;
 
 export function generatePrime(min,max) {
   let primeArray = [];
