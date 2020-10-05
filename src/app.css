@@ -1,7 +1,3 @@
-ul {
-  list-style: none;
-}
-
-.page-item {
-  display: inline-block;
+.modal-open .modal {
+  overflow-x: scroll;
 }

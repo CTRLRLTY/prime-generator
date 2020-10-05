@@ -12,6 +12,7 @@ import {
 } from 'reactstrap';
 import {generatePrime, genRowMap} from './rsa'
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './app.css';
 
 function getLastDigit(str) {
   return str.slice(-1);
