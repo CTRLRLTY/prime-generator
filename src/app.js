@@ -14,12 +14,13 @@ import {generatePrime, genRowMap} from './rsa'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.css';
 
+
 function getLastDigit(str) {
   return str.slice(-1);
 }
 
 function IsSelectedPrime(prime) {
-//This function does not check if the parameter is prime, it is assume its prime
+  //This function does not check if the parameter is prime, it is assume its prime
   let lastDigit = prime.slice(-1);
   if(lastDigit === '1' || lastDigit === '3' || lastDigit === '7' || lastDigit === '9')
     return true;
@@ -28,13 +29,17 @@ function IsSelectedPrime(prime) {
 function PrimeTable(props) {
   const [modal, setModal] = useState(false);
   const [tableRows, setTableRows] = useState(null);
-  const [max, setMax] = useState(1000);
-  const [min, setMin] = useState(0);
+  const [max, setMax] = useState(bigInt(1000));
+  const [min, setMin] = useState(bigInt(0));
 
   function generateTableRow() {
+
     const primeArray = generatePrime(min,max);
+    console.log('done generating prime');
     const primeMap = primeArray.filter(prime => IsSelectedPrime(prime.toString()));
+    console.log('done filtering prime');
     const rowMap = genRowMap(min,max);
+    console.log('done generating rowMap');
 
     const _tableRows = rowMap.map(row => {
       const primeRows = primeMap.filter(prime => prime.gt(row) && prime.lt(bigInt(row).plus(10)));
@@ -61,6 +66,8 @@ function PrimeTable(props) {
         </tr>
       );
     });
+
+    console.log('done generating tableRows');
     return _tableRows;
   }
 
@@ -77,11 +84,11 @@ function PrimeTable(props) {
     let searchval = bigInt(e.target.value);
 
     if(e.keyCode === 13) {
-        if(searchval.lt(1000))
-          setMin(bigInt.zero);
-        else
-          setMin(searchval.minus(1000));
+      if(searchval.lt(1000))
+        setMax(bigInt(1000));
+      else
         setMax(searchval);
+      setMin(searchval.minus(1000));
     }
 
   }
@@ -102,7 +109,7 @@ function PrimeTable(props) {
   }
 
   useEffect(() =>{
-      setTableRows(generateTableRow());
+    setTableRows(generateTableRow());
   }, [min,max,modal])
 
   return(
