@@ -11,6 +11,7 @@ import {
   PaginationLink
 } from 'reactstrap';
 import {generatePrime, genRowMap} from './rsa'
+import P_Worker from './prime.worker.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.css';
 
@@ -26,6 +27,7 @@ function IsSelectedPrime(prime) {
     return true;
 }
 
+let test;
 function PrimeTable(props) {
   const [modal, setModal] = useState(false);
   const [tableRows, setTableRows] = useState(null);
@@ -109,6 +111,11 @@ function PrimeTable(props) {
   }
 
   useEffect(() =>{
+    test = new P_Worker();
+    test.postMessage([min.toString(),max.toString()]);
+    test.onmessage = e => {
+      console.log(e.data);
+    }
     setTableRows(generateTableRow());
   }, [min,max,modal])
 

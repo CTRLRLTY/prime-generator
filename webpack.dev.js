@@ -5,7 +5,7 @@ module.exports = merge(common, {
   mode: 'development',
   devtool: 'inline-source-map',
   devServer: {
-    contentBase: './dist',
+    contentBase: './docs',
   },
   optimization: {
     usedExports: true, //For tree shaking
