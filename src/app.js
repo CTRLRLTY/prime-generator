@@ -15,6 +15,17 @@ import P_Worker from './prime.worker.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.css';
 
+function createWork(worker, data) {
+  return new Promise((resolve,reject) => {
+    let thread = new worker();
+    thread.postMessage(data);
+    thread.onmessage = e => {
+      thread.terminate();
+      resolve(e.data);
+    }
+  })
+}
+
 
 function getLastDigit(str) {
   return str.slice(-1);
@@ -34,17 +45,15 @@ function PrimeTable(props) {
   const [max, setMax] = useState(bigInt(1000));
   const [min, setMin] = useState(bigInt(0));
 
-  function generateTableRow() {
+  function generateTableRow(primeArray) {
 
-    const primeArray = generatePrime(min,max);
-    console.log('done generating prime');
-    const primeMap = primeArray.filter(prime => IsSelectedPrime(prime.toString()));
+    const primeMap = primeArray.filter(prime => IsSelectedPrime(prime));
     console.log('done filtering prime');
     const rowMap = genRowMap(min,max);
     console.log('done generating rowMap');
 
     const _tableRows = rowMap.map(row => {
-      const primeRows = primeMap.filter(prime => prime.gt(row) && prime.lt(bigInt(row).plus(10)));
+      const primeRows = primeMap.filter(prime => bigInt(prime).gt(row) && bigInt(prime).lt(bigInt(row).plus(10)));
       const _primeRows = [null,null,null,null];
       for (let i=0; i < 4; i++) {
         if(primeRows[i] !== undefined) {
@@ -111,13 +120,27 @@ function PrimeTable(props) {
   }
 
   useEffect(() =>{
-    test = new P_Worker();
-    test.postMessage([min.toString(),max.toString()]);
-    test.onmessage = e => {
-      console.log(e.data);
+    let workers = [];
+    let tempMax = max;
+    let tempMin = min;
+    for(let i = 0; i < 20; i++) {
+      workers[i] = createWork(P_Worker, [tempMin.toString(),tempMax.toString()])
+      tempMax = tempMax.minus(bigInt(50));
+      tempMin = tempMax.minus(bigInt(50));
     }
-    setTableRows(generateTableRow());
-  }, [min,max,modal])
+
+    /*
+    createWork(P_Worker, [min.toString(),max.toString()])
+      .then(data => setTableRows(generateTableRow(data)));
+      */
+    //workers[0].then(data => setTableRows(generateTableRow(data)))
+    Promise.all(workers).then(data => {
+      let sortedData = data.flat().sort((a,b) => bigInt(a).minus(b));
+      setTableRows(generateTableRow(sortedData));
+      console.log('done settingup table')
+    })
+
+  }, [min,max])
 
   return(
     <div>
@@ -159,4 +182,3 @@ ReactDOM.render(
     <PrimeTable/>
   </div>, document.getElementById('root')
 )
-console.log(bigInt(5));
