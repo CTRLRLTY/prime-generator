@@ -9,8 +9,8 @@ import {
   Pagination,
   PaginationItem,
   PaginationLink,
-  Progress
 } from 'reactstrap';
+import {CSVLink} from 'react-csv';
 import {generatePrime, genRowMap} from './rsa'
 import P_Worker from './prime.worker.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -35,7 +35,6 @@ function getLastDigit(str) {
 let rowMap = [];
 let finishWork = 0;
 const totalWorker = 1;
-const divider = 1000;
 function PrimeTable(props) {
   const [tableRows, setTableRows] = useState(null);
   const [_rowMap, _setRowMap] = useState(1);
@@ -48,7 +47,7 @@ function PrimeTable(props) {
     const primeMap = primeArray
     const rowMap = genRowMap(min,max);
 
-    const _tableRows = rowMap.map(row => {
+    const tableData = rowMap.map(row => {
       const primeRows = primeMap.filter(prime => bigInt(prime).gt(row) && bigInt(prime).lt(bigInt(row).plus(10)));
       const _primeRows = [" ","  ","   ","    "];
       for (let i=0; i < 4; i++) {
@@ -61,20 +60,22 @@ function PrimeTable(props) {
           else if (lastDigit === '9') _primeRows[3] = primeRows[i].toString();
         }
       }
+      return ([
+        row, ..._primeRows
+      ])
+    })
 
-      const primetd = _primeRows.map(prime => (
-        <td key={prime}>{prime}</td>
-      ));
+    const _tableRows = tableData.map(col => (
+      <tr key={col[0]}>
+        <th scope="row">{col[0]}</th>
+        <td>{col[1]}</td>
+        <td>{col[2]}</td>
+        <td>{col[3]}</td>
+        <td>{col[4]}</td>
+      </tr>
+    ))
 
-      return (
-        <tr key={row}>
-          <th scope="row">{row}</th>
-          {primetd}
-        </tr>
-      );
-    });
-
-    return _tableRows;
+    return [_tableRows, tableData];
   }
 
   const handleKeyDown = e => {
@@ -105,7 +106,9 @@ function PrimeTable(props) {
     if(finishWork === totalWorker) {
       let sortedData = rowMap.flat().sort((a,b) => bigInt(a).minus(b));
       console.log(new Date());
-      setTableRows(generateTableRow(sortedData));
+      let [tableRow,tableData] = generateTableRow(sortedData)
+      setTableRows(tableRow);
+      console.log(tableData)
       setBuffer(
         <Pagination size="sm">
           <PaginationItem>
@@ -117,6 +120,9 @@ function PrimeTable(props) {
           <PaginationItem>
             <PaginationLink next onClick={paginationNext}/>
           </PaginationItem>
+          <PaginationItem>
+            <CSVLink data={tableData} headers={["row","1","3","7","9"]}><Button>Export to CSV</Button></CSVLink>
+          </PaginationItem>
         </Pagination>
       )
 
@@ -124,22 +130,14 @@ function PrimeTable(props) {
   },[rowMap]);
 
   useEffect(() =>{
-    let workers = [];
-    let tempMax = max;
-    let tempMin = min;
     _setRowMap([]);
     finishWork=0;
-    for(let i = 0; i < totalWorker; i++) {
-      workers[i] = createWork(P_Worker, [tempMin.toString(),tempMax.toString()])
-      workers[i].then(data => {
+    let workers = createWork(P_Worker, [min.toString(),max.toString()])
+    workers.then(data => {
         rowMap = rowMap.concat(data);
         finishWork++;
         _setRowMap(rowMap);
       })
-      tempMax = tempMax.minus(bigInt(divider));
-      tempMin = tempMax.minus(bigInt(divider));
-    }
-
   }, [min,max])
 
   return(

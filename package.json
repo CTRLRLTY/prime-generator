@@ -17,6 +17,7 @@
     "decimal.js": "^10.2.0",
     "number-theory": "^1.1.0",
     "react": "^16.13.1",
+    "react-csv": "^2.0.3",
     "react-dom": "^16.13.1",
     "reactstrap": "^8.6.0",
     "scanf": "^1.1.2",
