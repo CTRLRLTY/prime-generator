@@ -8,7 +8,8 @@ import {
   ModalBody,
   Pagination,
   PaginationItem,
-  PaginationLink
+  PaginationLink,
+  Progress
 } from 'reactstrap';
 import {generatePrime, genRowMap} from './rsa'
 import P_Worker from './prime.worker.js';
@@ -31,30 +32,25 @@ function getLastDigit(str) {
   return str.slice(-1);
 }
 
-function IsSelectedPrime(prime) {
-  //This function does not check if the parameter is prime, it is assume its prime
-  let lastDigit = prime.slice(-1);
-  if(lastDigit === '1' || lastDigit === '3' || lastDigit === '7' || lastDigit === '9')
-    return true;
-}
-
-let test;
+let rowMap = [];
+let finishWork = 0;
+const totalWorker = 1;
+const divider = 1000;
 function PrimeTable(props) {
-  const [modal, setModal] = useState(false);
   const [tableRows, setTableRows] = useState(null);
+  const [_rowMap, _setRowMap] = useState(1);
   const [max, setMax] = useState(bigInt(1000));
   const [min, setMin] = useState(bigInt(0));
+  const [temporaryBuffer, setBuffer] = useState("");
 
   function generateTableRow(primeArray) {
 
-    const primeMap = primeArray.filter(prime => IsSelectedPrime(prime));
-    console.log('done filtering prime');
+    const primeMap = primeArray
     const rowMap = genRowMap(min,max);
-    console.log('done generating rowMap');
 
     const _tableRows = rowMap.map(row => {
       const primeRows = primeMap.filter(prime => bigInt(prime).gt(row) && bigInt(prime).lt(bigInt(row).plus(10)));
-      const _primeRows = [null,null,null,null];
+      const _primeRows = [" ","  ","   ","    "];
       for (let i=0; i < 4; i++) {
         if(primeRows[i] !== undefined) {
           //All of the primeRows are of BigInt, it needs to be stored as string or error will occured
@@ -67,34 +63,24 @@ function PrimeTable(props) {
       }
 
       const primetd = _primeRows.map(prime => (
-        <td>{prime}</td>
+        <td key={prime}>{prime}</td>
       ));
 
       return (
-        <tr >
+        <tr key={row}>
           <th scope="row">{row}</th>
           {primetd}
         </tr>
       );
     });
 
-    console.log('done generating tableRows');
     return _tableRows;
-  }
-
-  const handleClick = () => {
-    setMin(bigInt.zero);
-    setMax(bigInt('1000'));
-
-    setTableRows(generateTableRow())
-    setValue(bigInt(event.target.value));
-    setModal(true);
   }
 
   const handleKeyDown = e => {
     let searchval = bigInt(e.target.value);
-
     if(e.keyCode === 13) {
+    console.log(new Date());
       if(searchval.lt(1000))
         setMax(bigInt(1000));
       else
@@ -102,10 +88,6 @@ function PrimeTable(props) {
       setMin(searchval.minus(1000));
     }
 
-  }
-
-  const handleToggle = () => {
-    setModal(!modal);
   }
 
   const paginationNext = () => {
@@ -119,61 +101,64 @@ function PrimeTable(props) {
     }
   }
 
+  useEffect(() => {
+    if(finishWork === totalWorker) {
+      let sortedData = rowMap.flat().sort((a,b) => bigInt(a).minus(b));
+      console.log(new Date());
+      setTableRows(generateTableRow(sortedData));
+      setBuffer(
+        <Pagination size="sm">
+          <PaginationItem>
+            <PaginationLink previous onClick={paginationPrev}/>
+          </PaginationItem>
+          <PaginationItem>
+            <input type="text" onKeyDown={handleKeyDown}/>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink next onClick={paginationNext}/>
+          </PaginationItem>
+        </Pagination>
+      )
+
+    } else setBuffer(finishWork/totalWorker)
+  },[rowMap]);
+
   useEffect(() =>{
     let workers = [];
     let tempMax = max;
     let tempMin = min;
-    for(let i = 0; i < 20; i++) {
+    _setRowMap([]);
+    finishWork=0;
+    for(let i = 0; i < totalWorker; i++) {
       workers[i] = createWork(P_Worker, [tempMin.toString(),tempMax.toString()])
-      tempMax = tempMax.minus(bigInt(50));
-      tempMin = tempMax.minus(bigInt(50));
+      workers[i].then(data => {
+        rowMap = rowMap.concat(data);
+        finishWork++;
+        _setRowMap(rowMap);
+      })
+      tempMax = tempMax.minus(bigInt(divider));
+      tempMin = tempMax.minus(bigInt(divider));
     }
-
-    /*
-    createWork(P_Worker, [min.toString(),max.toString()])
-      .then(data => setTableRows(generateTableRow(data)));
-      */
-    //workers[0].then(data => setTableRows(generateTableRow(data)))
-    Promise.all(workers).then(data => {
-      let sortedData = data.flat().sort((a,b) => bigInt(a).minus(b));
-      setTableRows(generateTableRow(sortedData));
-      console.log('done settingup table')
-    })
 
   }, [min,max])
 
   return(
     <div>
-      <Button onClick={handleToggle}>Mapped Tables</Button>
-      <Modal size="lg" isOpen={modal} toggle={handleToggle}>
-        <ModalBody>
-          <Table bordered>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>1</th>
-                <th>3</th>
-                <th>7</th>
-                <th>9</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tableRows}
-            </tbody>
-          </Table>
-          <Pagination size="sm">
-            <PaginationItem>
-              <PaginationLink previous onClick={paginationPrev}/>
-            </PaginationItem>
-            <PaginationItem>
-              <input type="text" onKeyDown={handleKeyDown}/>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink next onClick={paginationNext}/>
-            </PaginationItem>
-          </Pagination>
-        </ModalBody>
-      </Modal>
+        <Table bordered>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>1</th>
+              <th>3</th>
+              <th>7</th>
+              <th>9</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableRows}
+          </tbody>
+        </Table>
+        {temporaryBuffer}
     </div>
   )
 }

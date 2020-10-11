@@ -109,7 +109,7 @@ export default RSA;
 export function generatePrime(min,max) {
   let primeArray = [];
   for(let i = bigInt(min); i.lt(max); i = i.plus(1))
-    if(i.isPrime()) primeArray.push(i);
+    if(i.isProbablePrime()) primeArray.push(i);
   return primeArray
 }
 export function genRowMap(min,max) {
