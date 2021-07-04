@@ -3,7 +3,7 @@ const common = require("./webpack.common.js");
 
 module.exports = merge(common, {
     output: {
-      publicPath: "/rsa/"
+      publicPath: "/prime-generator/"
     },
     mode: 'production',
     devtool: 'source-map'
